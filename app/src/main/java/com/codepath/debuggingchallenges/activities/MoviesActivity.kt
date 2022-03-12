@@ -5,6 +5,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codepath.debuggingchallenges.adapters.MoviesAdapter
 import android.os.Bundle
 import android.util.Log
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView.VERTICAL
 import com.codepath.debuggingchallenges.R
 import com.codepath.asynchttpclient.AsyncHttpClient
 import com.codepath.asynchttpclient.callback.JsonHttpResponseHandler
@@ -16,7 +18,7 @@ import java.util.ArrayList
 class MoviesActivity : AppCompatActivity() {
     private var rvMovies: RecyclerView? = null
     var adapter: MoviesAdapter? = null
-    var movies: List<Movie>? = null
+    val movies: MutableList<Movie> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,21 +26,24 @@ class MoviesActivity : AppCompatActivity() {
         rvMovies = findViewById(R.id.rvMovies)
 
         // Create the adapter to convert the array to views
-        val adapter = MoviesAdapter(movies)
+        adapter = MoviesAdapter(movies)
 
         // Attach the adapter to a ListView
         rvMovies?.adapter = adapter
+        rvMovies?.layoutManager = LinearLayoutManager(this)
+
         fetchMovies()
     }
 
     private fun fetchMovies() {
-        val url = " https://api.themoviedb.org/3/movie/now_playing?api_key="
+        val url = " https://api.themoviedb.org/3/movie/now_playing?api_key=$API_KEY"
         val client = AsyncHttpClient()
         client[url, null, object : JsonHttpResponseHandler() {
             override fun onSuccess(statusCode: Int, headers: Headers, response: JSON) {
                 try {
                     val moviesJson = response.jsonObject.getJSONArray("results")
-                    movies = Movie.fromJSONArray(moviesJson)
+                    movies.addAll(Movie.fromJSONArray(moviesJson))
+                    adapter?.notifyDataSetChanged()
                 } catch (e: JSONException) {
                     e.printStackTrace()
                 }
